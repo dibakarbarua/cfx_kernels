@@ -34,6 +34,7 @@ template <int kStages, class ElementA, class ElementB, class ElementC,
 struct SharedStorageABC {
     
     array_aligned<ElementA, cosize_v<SmemLayoutA>> smem_A;
+    // NOTICE the union, SMEM(C) is only written in epilogue
     union {
         array_aligned<ElementB, cosize_v<SmemLayoutB>> smem_B;
         array_aligned<ElementC, cosize_v<SmemLayoutC>> smem_C;
@@ -57,8 +58,10 @@ struct Kernel_traits {
     using index_t = int64_t;
 
     // The number of threads.
+    // kNWarps = 12 warps = 4 WGs
     static constexpr int kNWarps = kNWarps_;
     static constexpr int kNumThreads = kNWarps * cutlass::NumThreadsPerWarp;
+    // NumMMAWGs = 4 - 1 (Producer) = kNumThreads - 128
     static constexpr int NumMmaThreads = kNumThreads - 128;
     // Use one warp in producer warpgroup for TMA
     static constexpr int NumProducerThreads = cutlass::NumThreadsPerWarp;
@@ -80,7 +83,7 @@ struct Kernel_traits {
     // using AtomLayoutMNK = Layout<Shape<Int<kBlockM/64>, _1, _1>>;
     using TiledMma = decltype(cute::make_tiled_mma(
         cute::GMMA::ss_op_selector<Element, Element, ElementAccum, TileShape_MNK>(),
-        AtomLayoutMNK{}));
+        AtomLayoutMNK{})); // NOTE: Here TileShape is only used for static assert checks
     // using TiledMma =
     //     decltype(make_tiled_mma(SM90_64x128x16_F16F16F16_SS<GMMA::Major::K,GMMA::Major::K>{},
     //         Layout<Shape<_2,_1,_1>>{}));
@@ -105,6 +108,7 @@ struct Kernel_traits {
     using SmemLayoutC =
         decltype(tile_to_shape(SmemLayoutAtomC{}, select<0, 1>(TileShape_MNK{})));
 
+    // Q: Where are Copy Atoms for A and B?????
     using SmemCopyAtomC = Copy_Atom<cute::SM90_U32x4_STSM_N, OutputType>;
     
     using SharedStorage =

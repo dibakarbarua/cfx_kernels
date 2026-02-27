@@ -19,7 +19,7 @@ int main(int argc, char const* argv[]) {
     std::cout << "This example requires NVIDIA's Hopper Architecture GPU with compute capability 90a\n" << std::endl;
     return 0;
   }
-#if defined(CUTLASS_ARCH_MMA_SM90_SUPPORTED)
+
   Options options;
 
   options.parse(argc, argv);
@@ -63,6 +63,7 @@ int main(int argc, char const* argv[]) {
         print_work_schedule<cfx::DataParallelPersistentTileScheduler>(options.m, options.n, options.k, 114);
         break;
       case 2:
+        // KernelTraits<bM, bN, bK, nWarps, stages, clusterM, clusterN, Element, OutputType, fp32_accum>
         using KernelTraits = Kernel_traits<256, 192, 128, 12, 2, /*ClusterM=*/1, /*ClusterN=*/1, TA, TC>;
         print_sk_work_schedule<cfx::StreamKPersistentTileScheduler<KernelTraits>>(options.m, options.n, options.k, 114);
         break;
@@ -88,10 +89,10 @@ int main(int argc, char const* argv[]) {
   else
     options.print_usage(std::cout);
 
-#else
+
 
   std::cout << "CUTLASS_ARCH_MMA_SM90_SUPPORTED must be enabled, but it is not. Test is waived \n" << std::endl;
-#endif
+
 
   return 0;
 }

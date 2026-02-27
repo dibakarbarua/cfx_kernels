@@ -43,8 +43,8 @@ void gemm_tn(int M, int N, int K,
 
     // fp16 accum optimal sizes
     // using Kernel_traits = std::conditional_t<!validation,
+    // Q: Why have the selected bK = 192???
     //   Kernel_traits<256, 256, 128-32, 20, 2, /*ClusterM=*/1, /*ClusterN=*/2, TA, TC, false>,
-    //   // Kernel_traits<128 + 64, 256, 128, 12 + 4, 2, 1, 1, TA, TC, false>,
     //   Kernel_traits<128, 256, 128, 12, 2, 1, 1, TA, TC, false> // validation params
     // >;
 
